@@ -201,7 +201,7 @@ public class TimedRDMSim {
 	 */
 	public void runStep(int timeStep) {
 		try {
-			Thread.sleep(250);
+			Thread.sleep(500);
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
 		}

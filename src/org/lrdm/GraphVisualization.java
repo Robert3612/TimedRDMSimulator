@@ -91,7 +91,7 @@ public class GraphVisualization implements VisualizationStrategy {
         simTimeLabel.setHorizontalAlignment(SwingConstants.CENTER);
         gc.gridx=0;
         gc.gridy=0;
-        gc.gridwidth=1;
+        gc.gridwidth=2;
         gc.gridheight=1;
         gc.fill = GridBagConstraints.HORIZONTAL;
         gl.setConstraints(simTimeLabel, gc);
@@ -100,14 +100,14 @@ public class GraphVisualization implements VisualizationStrategy {
         gc = new GridBagConstraints();
         gc.gridx=0;
         gc.gridy=1;
-        gc.gridwidth=1;
+        gc.gridwidth=2;
         gc.fill = GridBagConstraints.HORIZONTAL;
         gl.setConstraints(dv, gc);
-        dv.setMinimumSize(new Dimension(WIDTH,HEIGHT/2));
-        dv.setPreferredSize(new Dimension(WIDTH, HEIGHT/2));
+        dv.setMinimumSize(new Dimension(600,800/2));
+        dv.setPreferredSize(new Dimension(600, 800/2));
         panel.add(dv);
 
-        bandwidthChart = QuickChart.getChart("Bandwidth over Time",TIMESTEP,BANDWIDTH,BANDWIDTH, List.of(0), List.of(0));
+        bandwidthChart = getChart("Bandwidth over Time",TIMESTEP,BANDWIDTH,BANDWIDTH, List.of(0), List.of(0));
         bandwidthChart.getStyler().setTheme(new MatlabTheme());
         bandwidthChart.getStyler().setLegendVisible(false);
         XYSeries targetBW = bandwidthChart.addSeries("Target",List.of(0),List.of(0));
@@ -123,22 +123,22 @@ public class GraphVisualization implements VisualizationStrategy {
         chartPanel.setMaximumSize(new Dimension(WIDTH,HEIGHT/6));
         panel.add(chartPanel);
 
-        activeLinksChart = QuickChart.getChart("Active Links", TIMESTEP, ACTIVE_LINKS, ACTIVE_LINKS, List.of(0), List.of(0));
+        activeLinksChart = getChart("Active Links", TIMESTEP, ACTIVE_LINKS, ACTIVE_LINKS, List.of(0), List.of(0));
         activeLinksChart.getStyler().setTheme(new MatlabTheme());
         activeLinksChart.getStyler().setLegendVisible(false);
         XYSeries targetAL = activeLinksChart.addSeries("Target Active Links",List.of(0),List.of(0));
         targetAL.setMarker(SeriesMarkers.NONE);
         linkChartPanel = new XChartPanel<>(activeLinksChart);
         gc = new GridBagConstraints();
-        gc.gridx=0;
-        gc.gridy=3;
+        gc.gridx=1;
+        gc.gridy=2;
         gc.gridwidth=1;
         gl.setConstraints(linkChartPanel, gc);
         linkChartPanel.setMinimumSize(new Dimension(WIDTH,HEIGHT/6));
         linkChartPanel.setMaximumSize(new Dimension(WIDTH,HEIGHT/6));
         panel.add(linkChartPanel);
 
-        timeToWriteChart = QuickChart.getChart("Time To Write", TIMESTEP, TTW, TTW, List.of(0), List.of(0));
+        timeToWriteChart = getChart("Time To Write", TIMESTEP, TTW, TTW, List.of(0), List.of(0));
         timeToWriteChart.getStyler().setTheme(new MatlabTheme());
         timeToWriteChart.getStyler().setLegendVisible(false);
         XYSeries targetTTW = timeToWriteChart.addSeries("Target Time To Write",List.of(0),List.of(0));
@@ -146,7 +146,7 @@ public class GraphVisualization implements VisualizationStrategy {
         ttwChartPanel = new XChartPanel<>(timeToWriteChart);
         gc = new GridBagConstraints();
         gc.gridx=0;
-        gc.gridy=4;
+        gc.gridy=3;
         gc.gridwidth=1;
         gl.setConstraints(ttwChartPanel, gc);
         ttwChartPanel.setMinimumSize(new Dimension(WIDTH,HEIGHT/6));
@@ -154,7 +154,7 @@ public class GraphVisualization implements VisualizationStrategy {
         ttwChartPanel.setPreferredSize(new Dimension(WIDTH,HEIGHT/6));
         panel.add(ttwChartPanel);
 
-        ratioChart = new XYChart(600, 400);
+        ratioChart = new XYChart(600, 300);
         ratioChart.setTitle("DirtyFlags Ratio");
         ratioChart.setXAxisTitle(TIME_STEP);
         ratioChart.setYAxisTitle(RATIO);
@@ -163,15 +163,15 @@ public class GraphVisualization implements VisualizationStrategy {
         targetTTW.setMarker(SeriesMarkers.NONE);
         ratioChartPanel = new XChartPanel<>(ratioChart);
         gc = new GridBagConstraints();
-        gc.gridx=0;
-        gc.gridy=5;
+        gc.gridx=1;
+        gc.gridy=3;
         gc.gridwidth=1;
         gl.setConstraints(ratioChartPanel, gc);
         ratioChartPanel.setMinimumSize(new Dimension(WIDTH,HEIGHT/6));
         ratioChartPanel.setMaximumSize(new Dimension(WIDTH,HEIGHT/6));
         panel.add(ratioChartPanel);
 
-        JScrollPane scrollPane = new JScrollPane(panel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        JScrollPane scrollPane = new JScrollPane(panel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setMinimumSize(new Dimension(WIDTH, HEIGHT));
         panel.setBackground(Color.WHITE);
 
@@ -188,6 +188,16 @@ public class GraphVisualization implements VisualizationStrategy {
                 System.exit(0);
             }
         });
+    }
+
+    public XYChart getChart(String chartTitle, String xTitle, String yTitle, String seriesName, List<? extends Number> xData, List<? extends Number> yData) {
+        XYChart chart = new XYChart(600, 300);
+        chart.setTitle(chartTitle);
+        chart.setXAxisTitle(xTitle);
+        chart.setYAxisTitle(yTitle);
+        XYSeries series = chart.addSeries(seriesName, xData, yData);
+        series.setMarker(SeriesMarkers.NONE);
+        return chart;
     }
 
     @Override

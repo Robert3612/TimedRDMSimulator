@@ -19,9 +19,9 @@ class Effector
   + setMirrors(int m, int t)
   + setStrategy(TopologyStrategy strategy, int t)
   + setTargetLinksPerMirror(int numTargetedLinks, int t)
-  + setDataPackage(int mirrorId, List<Data> data, int t)
-  + setMirrorUpdateStrategy(MirrorUpdater updater, int t)
-  + setDataUpdateStrategy(UpdateStrategy updateStrategy, int t)
+  + setDataPackage(int mirrorId, DataPackage dataPackage, int t)
+  + setDataUpdateStrategy(DataUpdateStrategy dataUpdateStrategy, int t)
+  + setDirtyFlagUpdateStrategy(DirtyFlagUpdateStrategy dirtyFlagChange, int t)
   + timeStep(int t)
 }
 
@@ -51,17 +51,19 @@ class Network
 
 abstract class DirtyFlagUpdateStrategy
 {
-  + {abstract} void updateMirrors(Network network)
+  # Map<DirtyFlag, Map<Integer, Integer>> dirtyFlagAppearance
+  + {abstract} void updateDirtyFlag(List<Mirror> mirrors, Network n, Integer simTime)
+  # void setupMirror(Mirror m)
 }
 
-class PushMirrorUpdater
+class HighestFlagAllAtOnce
 {
-  + void updateMirrors(Network network)
+  + void updateDirtyFlag(List<Mirror> mirrors, Network n, Integer simTime)
 }
 
-class PullMirrorUpdater
+class HighestFlagPerTimestep
 {
-  + void updateMirrors(Network network)
+  + void updateDirtyFlag(List<Mirror> mirrors, Network n, Integer simTime)
 }
 
 note right of Network::timeStep
@@ -95,13 +97,13 @@ class MirrorProbe
   + double getMirrorRatio()
 }
 
-class DataProbe
+class DirtyFlagProbe
 {
-  - double DataRatio
+  - List<DirtyFlag> dirtyFlagList
+  - DirtyFlag highest
+  - double FlagRatio
   + void update(int t)
   + void print(int t)
-  + int getNewestFlag(int t)
-  - void notifyNetwork()
 }
 
 
@@ -144,38 +146,54 @@ class Link
 
 class DataPackage
 {
-  - List<Data> data
-  - List<int> dirtyFlag
-  + int getDirtyFlag
-  + List<String> getData
+  - boolean invalid
+  + int getDirtyFlag()
+  + List<String> getData()
   + boolean isLoaded()
+}
+
+class DirtyFlag{
+  - List<Integer> flag
+  + int compareFlag(List<Integer> otherFlag)
+  + boolean equalDirtyFlag(List<Integer> otherFlag)
+  + String toString()
 }
 
 class Data
 {
   - int fileSize
   - int received
-  - String content
-  + int getFileSize()
-  + int getDirtyFlag
-  + String getData
+  - int content
   + void increaseReceived(int amount)
   + boolean isLoaded()
 }
 
-abstract class DataUpdateStrategy
+interface DataUpdateStrategy
 {
-  + {abstract} void updateData()
+  + int updateData(Mirror m, Network n)
+  + boolean updateRequired(Mirror m, Network n);
 }
 
-class DeltaUpdateStrategy
+abstract class ConnectedDataUpdateStrategy
 {
-  + void updateData()
+  # boolean setZero
+  # DirtyFlag setZeroWhen
+  + boolean updateRequired(Mirror m, Network n)
+  # boolean checkLinks(Link l)
+  # void checkLength(DataPackage data1, DataPackage data2)
+  # DataPackage doNormalUpdate(DataPackage data1, DataPackage data2, int bandwidth)
 }
 
-class FullUpdateStrategy
+class DeltaDataUpdateStrategy
 {
-  + void updateData()
+  + int updateData(Mirror m, Network n)
+  - int deltaUpdate(Mirror m, Mirror m2, Link l)
+}
+
+class FullDataUpdateStrategy
+{
+  + int updateData(Mirror m, Network n)
+  - int fullUpdate(Mirror m, Mirror m2, Link l)
 }
 
 class LinkProbe
@@ -193,30 +211,51 @@ interface TopologyStrategy
     + int getNumTargetLinks(Network)
 }
 
-interface Action{
+abstract class Action{
+- int id
+- int time
+- Network network
 + void run(Network, t)
 
 }
 
-class DataPackageAction{
-- int mirrorId
-- List<Data> data
+class Effect{
 }
 
-class DataUpdateAction{
+class DataPackageChange{
+- int mirrorId
+- DataPackage package
+}
+
+class DataUpdateChange{
 - DataUpdateStrategy dataUpdateStrategy
 }
 
-class DirtyFlagUpdateAction{
+class DirtyFlagChange{
 - DirtyFlagUpdateStrategy dirtyFlagUpdateStrategy
+}
+
+class MirrorChange{
+- int newMirrors
+}
+
+class TargetLinkChange{
+- int newLinksPerMirror
+}
+
+class TopologyChange{
+- TopologyStrategy newTopology
 }
 
 class BalancedTreeTopologyStrategy
 
 class FullyConnectedTopologyStrategy
 
+class NConnectedTopology
+
 TopologyStrategy <|.. BalancedTreeTopologyStrategy
 TopologyStrategy <|.. FullyConnectedTopologyStrategy
+TopologyStrategy <|.. NConnectedTopology
 VisualizationStrategy <-- TimedRDMSim
 VisualizationStrategy <|. GraphVisualization
 TimedRDMSim --> Effector
@@ -236,19 +275,26 @@ Link -> LinkState
 Link --> "source" Mirror
 Link --> "target" Mirror
 
+DataPackage *--> Data
+DataPackage --> DirtyFlag
+
 Probe <|-- MirrorProbe
 Probe <|-- LinkProbe
-Probe <|-- DataProbe
+Probe <|-- DirtyFlagProbe
 
-DirtyFlagUpdateStrategy <|-- PushMirrorUpdater
-DirtyFlagUpdateStrategy <|-- PullMirrorUpdater
+DirtyFlagUpdateStrategy <|-- HighestFlagAllAtOnce
+DirtyFlagUpdateStrategy <|-- HighestFlagPerTimestep
 
-DataUpdateStrategy <|-- DeltaUpdateStrategy
-DataUpdateStrategy <|-- FullUpdateStrategy
-DataPackage -> "*" Data
+DataUpdateStrategy <|.. ConnectedDataUpdateStrategy
+ConnectedDataUpdateStrategy <|-- FullDataUpdateStrategy
+ConnectedDataUpdateStrategy <|-- DeltaDataUpdateStrategy
 TimedRDMSim -> Network
-Action <|.. DataPackageAction
-Action <|.. DataUpdateAction
-Action <|.. DirtyFlagUpdateAction
+Action <|-- DataPackageChange
+Action <|-- DataUpdateChange
+Action <|-- DirtyFlagChange
+Action <|-- MirrorChange
+Action <|-- TargetLinkChange
+Action <|-- TopologyChange
 Effector --> Action
+Action <--> Effect
 @enduml

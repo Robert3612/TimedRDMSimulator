@@ -15,7 +15,7 @@ public class DataPackage {
     private DirtyFlag dirtyFlag;
 
     /** invalid-flag if {@link Data} is invalid*/
-    boolean invalid = false;
+    private boolean invalid = false;
 
     public DataPackage(List<Data> data, DirtyFlag dirtyFlag) {
         this.data = data;

@@ -304,6 +304,7 @@ public class Network {
 	 * @param simTime (int) current simulation time for logging purposes
 	 */
 	public void timeStep(int simTime) {
+		dirtyFlagUpdateStrategy.updateDirtyFlag(mirrors, this, simTime);
 		handleMirrors(simTime);
 
 		handleLinks(simTime);
